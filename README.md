@@ -14,7 +14,7 @@ Plain static HTML, CSS, and vanilla JavaScript. No build step, no framework, no 
 
 - **Design system:** dark "instrument panel" aesthetic. Space Navy base, Signal Cyan accent.
 - **Fonts:** Space Grotesk (headings), Inter (body), JetBrains Mono (labels), via Google Fonts.
-- **Contact form:** [Web3Forms](https://web3forms.com) (no backend needed). See setup below.
+- **Contact form:** [FormSubmit](https://formsubmit.co) AJAX (no backend, no API key). Delivers to inquiries@, with honeypot, time-trap, link filtering, and rate limiting. See setup below.
 - **Accessibility:** semantic HTML, skip link, focus states, `prefers-reduced-motion` support, WCAG AA contrast.
 
 ## Project structure
@@ -24,7 +24,7 @@ Plain static HTML, CSS, and vanilla JavaScript. No build step, no framework, no 
 ├── index.html            Home
 ├── services/index.html   Services
 ├── about/index.html      About
-├── contact/index.html    Contact (Web3Forms form)
+├── contact/index.html    Contact (FormSubmit form)
 ├── 404.html              Not-found page
 ├── assets/
 │   ├── css/styles.css     Full design system
@@ -55,61 +55,45 @@ Everything below is intentionally a placeholder. Search and replace before launc
 
 | What | Where | Replace with |
 |------|-------|--------------|
-| **Web3Forms access key** | `contact/index.html`, hidden input `access_key` | Your key from [web3forms.com](https://web3forms.com) (free). Until this is set, the form shows a friendly "not connected yet" message instead of failing silently. |
 | **Phone number** `(321) 555-0100` | footer on every page + `contact/index.html` | Real phone (update both the visible text and the `tel:+1...` link). |
-| **Email** `inquiries@space-coast-automation.com` | footers, contact page, JSON-LD | Real inbox (this should also be the address that receives Web3Forms submissions). |
-| **Testimonials** | `index.html` ("What owners say") | Real client quotes with name, role, company. Remove the placeholder badge. |
-| **Team** `[ Add name ]` | `about/index.html` ("The team") | Real names, photos, and bios. Remove the placeholder badge. |
-| **Business address** | JSON-LD in `index.html` | Add street address and ZIP if you want a full local listing. Currently city/region only. |
+| **Business address** | JSON-LD in `index.html` | Add a street address and ZIP for a full local listing (currently city and region only). |
 
-### Wiring up the contact form (Web3Forms)
+The contact email is set to `inquiries@space-coast-automation.com`, which forwards to the owner inbox via Cloudflare Email Routing.
 
-1. Go to [web3forms.com](https://web3forms.com), enter the email that should receive inquiries, and copy the **access key**.
-2. In `contact/index.html`, find:
-   ```html
-   <input type="hidden" name="access_key" value="REPLACE_WITH_YOUR_WEB3FORMS_ACCESS_KEY" />
-   ```
-   and paste your key in place of the placeholder.
-3. Done. The form posts via JavaScript and shows inline success/error states. A honeypot field blocks basic spam.
+### Contact form (FormSubmit)
+
+The form posts via AJAX to [FormSubmit](https://formsubmit.co), which forwards submissions to `inquiries@space-coast-automation.com`. No API key, no backend.
+
+1. **Activate once:** submit the live form a single time. FormSubmit emails `inquiries@` (forwarded to your inbox) an activation link. Click it. After that, every submission is delivered.
+2. **Reply-to:** the submitter's email is passed through, so you can reply straight from your inbox.
+3. **Change the destination:** edit the email in the form's `data-endpoint` attribute in `contact/index.html`, then re-activate.
+
+Spam protections live in `assets/js/main.js`: a hidden honeypot field, a submit time-trap, a links/HTML content filter, and a per-browser rate limit (30 seconds between sends, 5 per hour). FormSubmit also filters server-side. To add a visible challenge later, drop in [Cloudflare Turnstile](https://www.cloudflare.com/products/turnstile/) (free).
 
 ---
 
-## Deploy on GitHub Pages
+## Hosting and DNS
 
-This repo is configured to serve from the `main` branch root.
+The site is hosted on **Cloudflare Workers** (static assets). `wrangler.jsonc` defines the Worker, and Cloudflare auto-deploys on push to `main`.
 
-1. **GitHub → Settings → Pages**
-2. **Build and deployment → Source:** "Deploy from a branch"
-3. **Branch:** `main`, folder `/ (root)` → **Save**
-4. The `CNAME` file already sets the custom domain to `space-coast-automation.com`.
-5. After DNS propagates, enable **Enforce HTTPS**.
+- **Custom domain:** attached in the Cloudflare dashboard (Workers & Pages → `space-coast-automation` → Domains). Cloudflare creates the DNS record and SSL automatically. To serve `www` too, add it as a second custom domain.
+- **Email:** Cloudflare → your domain → Email → Email Routing forwards `inquiries@space-coast-automation.com` to your personal inbox.
 
-### DNS for the custom domain
+The domain's nameservers must be on Cloudflare for the above to work.
 
-At your domain registrar / DNS provider, point the apex domain to GitHub Pages:
+### Alternative: GitHub Pages
 
-**A records** for `space-coast-automation.com`:
+If you turn off Cloudflare Workers, the `CNAME` file targets the apex domain. Enable repo **Settings → Pages → Source: `main` / root**, then point DNS at GitHub:
+
 ```
-185.199.108.153
-185.199.109.153
-185.199.110.153
-185.199.111.153
-```
-
-**AAAA records** (optional, IPv6):
-```
-2606:50c0:8000::153
-2606:50c0:8001::153
-2606:50c0:8002::153
-2606:50c0:8003::153
+A     @     185.199.108.153
+A     @     185.199.109.153
+A     @     185.199.110.153
+A     @     185.199.111.153
+CNAME www   rsnegach.github.io
 ```
 
-**CNAME record** for the `www` subdomain (recommended):
-```
-www  ->  rsnegach.github.io
-```
-
-GitHub provisions the TLS certificate automatically once DNS resolves. Full reference: [Configuring a custom domain for GitHub Pages](https://docs.github.com/pages/configuring-a-custom-domain-for-your-github-pages-site).
+Use one host, not both.
 
 ---
 
