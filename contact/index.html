@@ -88,24 +88,24 @@
         <div class="contact-grid">
           <!-- Form -->
           <div>
-            <form class="form" id="contact-form" data-contact-form novalidate>
-              <!-- Web3Forms hidden fields. Replace the access_key value with your key from web3forms.com -->
-              <input type="hidden" name="access_key" value="REPLACE_WITH_YOUR_WEB3FORMS_ACCESS_KEY" />
-              <input type="hidden" name="subject" value="New inquiry from space-coast-automation.com" />
-              <input type="hidden" name="from_name" value="Space Coast Automation website" />
-              <!-- Honeypot spam trap (leave empty) -->
-              <input type="checkbox" name="botcheck" class="sr-only" style="display:none" tabindex="-1" autocomplete="off" aria-hidden="true" />
+            <form class="form" id="contact-form" data-contact-form data-endpoint="https://formsubmit.co/ajax/inquiries@space-coast-automation.com" novalidate>
+              <!-- FormSubmit config. Delivers to inquiries@ (forwarded to your inbox). No API key needed. -->
+              <input type="hidden" name="_subject" value="New inquiry from space-coast-automation.com" />
+              <input type="hidden" name="_template" value="table" />
+              <input type="hidden" name="_captcha" value="false" />
+              <!-- Honeypot: real people leave this empty. Bots fill it and are dropped. -->
+              <input type="text" name="_honey" class="sr-only" tabindex="-1" autocomplete="off" aria-hidden="true" />
 
               <div class="form__row">
                 <div class="field" data-required>
                   <label class="field__label" for="name">Name</label>
-                  <input class="field__input" type="text" id="name" name="name" autocomplete="name" required aria-describedby="name-hint" />
+                  <input class="field__input" type="text" id="name" name="name" autocomplete="name" maxlength="80" required aria-describedby="name-hint" />
                   <span class="field__hint" id="name-hint">What should we call you?</span>
                   <span class="field__error" aria-live="polite"></span>
                 </div>
                 <div class="field" data-required>
                   <label class="field__label" for="email">Email</label>
-                  <input class="field__input" type="email" id="email" name="email" autocomplete="email" required aria-describedby="email-hint" />
+                  <input class="field__input" type="email" id="email" name="email" autocomplete="email" maxlength="120" required aria-describedby="email-hint" />
                   <span class="field__hint" id="email-hint">We will reply here within one business day.</span>
                   <span class="field__error" aria-live="polite"></span>
                 </div>
@@ -113,7 +113,7 @@
 
               <div class="field">
                 <label class="field__label" for="company">Company</label>
-                <input class="field__input" type="text" id="company" name="company" autocomplete="organization" aria-describedby="company-hint" />
+                <input class="field__input" type="text" id="company" name="company" autocomplete="organization" maxlength="120" aria-describedby="company-hint" />
                 <span class="field__hint" id="company-hint">Your business name, so we know who we are working with.</span>
               </div>
 
@@ -146,7 +146,7 @@
 
               <div class="field" data-required>
                 <label class="field__label" for="message">Message</label>
-                <textarea class="field__textarea" id="message" name="message" required aria-describedby="message-hint" placeholder="Tell us what is slowing you down. The more specific, the better the answer we can give."></textarea>
+                <textarea class="field__textarea" id="message" name="message" required maxlength="4000" aria-describedby="message-hint" placeholder="Tell us what is slowing you down. The more specific, the better the answer we can give."></textarea>
                 <span class="field__hint" id="message-hint">Walk us through the manual steps, the double entry, the quotes that sit overnight.</span>
                 <span class="field__error" aria-live="polite"></span>
               </div>

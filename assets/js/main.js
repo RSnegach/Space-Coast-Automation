@@ -174,11 +174,67 @@
   }
 
   /* ---------------------------------------------------------------------
-     Contact form via Web3Forms
-     Replace the access_key hidden input value with your real key.
-     Docs: https://web3forms.com
+     Contact form (FormSubmit AJAX) + spam protections
+     Submissions POST to the endpoint in the form's data-endpoint attribute,
+     which forwards to the site inbox. Layered defenses: honeypot, time trap,
+     link/HTML heuristics, and a per-browser rate limit.
      --------------------------------------------------------------------- */
-  var PLACEHOLDER_KEY = "REPLACE_WITH_YOUR_WEB3FORMS_ACCESS_KEY";
+  var SUBMIT_STORE = "sca_contact_submits";
+  var MIN_GAP_MS = 30000; // minimum 30s between submissions
+  var HOURLY_CAP = 5; // max submissions per rolling hour, per browser
+  var MIN_FILL_MS = 2500; // faster than this is almost certainly a bot
+
+  function recentSubmits() {
+    try {
+      return JSON.parse(localStorage.getItem(SUBMIT_STORE)) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function recordSubmit() {
+    var list = recentSubmits();
+    list.push(Date.now());
+    try {
+      localStorage.setItem(SUBMIT_STORE, JSON.stringify(list.slice(-20)));
+    } catch (e) {}
+  }
+
+  function rateLimitMessage() {
+    var now = Date.now();
+    var list = recentSubmits();
+    if (
+      list.some(function (t) {
+        return now - t < MIN_GAP_MS;
+      })
+    ) {
+      return "You just sent a message. Give us a moment to read it before sending another.";
+    }
+    if (
+      list.filter(function (t) {
+        return now - t < 3600000;
+      }).length >= HOURLY_CAP
+    ) {
+      return "You have sent several messages recently. Please email us directly at inquiries@space-coast-automation.com.";
+    }
+    return null;
+  }
+
+  function spamReason(message) {
+    var links = (
+      message.match(
+        /https?:\/\/|www\.|\b[a-z0-9-]+\.(?:com|net|org|io|co|ru|info|xyz|top|biz|link|click)\b/gi
+      ) || []
+    ).length;
+    if (links >= 2) return "links";
+    if (/<\/?[a-z][\s\S]*>/i.test(message)) return "html";
+    if (/\[url|\[link|\/url\]/i.test(message)) return "bbcode";
+    return null;
+  }
+
+  function successMsg() {
+    return "Got it. We will reply within one business day, usually sooner. Check your inbox, and your spam folder just in case.";
+  }
 
   function setFieldError(field, message) {
     if (!field) return;
@@ -235,6 +291,9 @@
     var form = document.querySelector("[data-contact-form]");
     if (!form) return;
 
+    var loadedAt = Date.now();
+    var endpoint = form.getAttribute("data-endpoint") || "";
+
     // Clear field error on input
     form.querySelectorAll(".field[data-required]").forEach(function (field) {
       var input = field.querySelector("input, select, textarea");
@@ -249,6 +308,22 @@
       e.preventDefault();
       hideStatus(form);
 
+      // 1) Honeypot: bots fill this hidden field. Show success, send nothing.
+      var honey = form.querySelector('input[name="_honey"]');
+      if (honey && honey.value) {
+        form.reset();
+        showStatus(form, "success", successMsg());
+        return;
+      }
+
+      // 2) Time trap: submitted faster than a human plausibly could.
+      if (Date.now() - loadedAt < MIN_FILL_MS) {
+        form.reset();
+        showStatus(form, "success", successMsg());
+        return;
+      }
+
+      // 3) Required fields and email format
       if (!validate(form)) {
         showStatus(
           form,
@@ -258,46 +333,80 @@
         return;
       }
 
-      var submitBtn = form.querySelector("[data-submit]");
-      var keyInput = form.querySelector('input[name="access_key"]');
-      var key = keyInput ? keyInput.value.trim() : "";
-
-      // Guard against shipping with the placeholder key
-      if (!key || key === PLACEHOLDER_KEY) {
+      // 4) Obvious-spam content heuristics
+      var msgEl = form.querySelector('[name="message"]');
+      var message = msgEl ? msgEl.value.trim() : "";
+      if (message.length < 10) {
         showStatus(
           form,
           "error",
-          "This form is not connected yet. Email us directly and we will reply within one business day."
+          "Please add a sentence or two about what you need."
+        );
+        return;
+      }
+      if (spamReason(message)) {
+        showStatus(
+          form,
+          "error",
+          "Please remove links and formatting from your message. We will follow up, and you can share links once we are in touch."
         );
         return;
       }
 
+      // 5) Rate limit (anti-inundation)
+      var limited = rateLimitMessage();
+      if (limited) {
+        showStatus(form, "error", limited);
+        return;
+      }
+
+      if (!endpoint) {
+        showStatus(
+          form,
+          "error",
+          "This form is not connected yet. Please email us directly at inquiries@space-coast-automation.com."
+        );
+        return;
+      }
+
+      var submitBtn = form.querySelector("[data-submit]");
       var originalLabel = submitBtn ? submitBtn.innerHTML : "";
       if (submitBtn) {
         submitBtn.setAttribute("aria-busy", "true");
         submitBtn.innerHTML = "Sending...";
       }
 
-      var data = new FormData(form);
+      var payload = {};
+      new FormData(form).forEach(function (v, k) {
+        payload[k] = v;
+      });
 
-      fetch("https://api.web3forms.com/submit", {
+      fetch(endpoint, {
         method: "POST",
-        headers: { Accept: "application/json" },
-        body: data,
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(payload),
       })
         .then(function (res) {
-          return res.json().then(function (json) {
-            return { ok: res.ok, json: json };
-          });
+          return res
+            .json()
+            .catch(function () {
+              return {};
+            })
+            .then(function (json) {
+              return { ok: res.ok, json: json };
+            });
         })
         .then(function (result) {
-          if (result.ok && result.json.success) {
+          var ok =
+            result.ok &&
+            (result.json.success === true || result.json.success === "true");
+          if (ok) {
+            recordSubmit();
             form.reset();
-            showStatus(
-              form,
-              "success",
-              "Got it. We will reply within one business day, usually sooner. Check your inbox, and your spam folder just in case."
-            );
+            showStatus(form, "success", successMsg());
           } else {
             throw new Error(
               (result.json && result.json.message) || "Submission failed"
@@ -308,7 +417,7 @@
           showStatus(
             form,
             "error",
-            "Something did not go through on our end. Please try again, or email us directly."
+            "Something did not go through on our end. Please try again, or email us directly at inquiries@space-coast-automation.com."
           );
         })
         .finally(function () {
