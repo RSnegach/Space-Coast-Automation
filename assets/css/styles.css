@@ -1563,54 +1563,6 @@ strong {
   color: var(--systems-green);
 }
 
-/* Team */
-.team {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.25rem;
-}
-
-.member {
-  padding: 1.5rem;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  text-align: center;
-}
-
-.member__avatar {
-  width: 76px;
-  height: 76px;
-  margin: 0 auto 1rem;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: rgba(61, 214, 224, 0.08);
-  border: 1px solid var(--border);
-  color: var(--accent);
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.5rem;
-}
-
-.member__name {
-  font-size: 1.1rem;
-  margin-bottom: 0.2rem;
-}
-
-.member__role {
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  letter-spacing: 0.06em;
-  color: var(--accent);
-  margin-bottom: 0.75rem;
-}
-
-.member__bio {
-  color: var(--text-muted);
-  font-size: 0.9rem;
-}
-
 /* Anchor nav for services */
 .anchor-nav {
   display: flex;
@@ -1774,12 +1726,6 @@ strong {
 
   .quotes {
     grid-template-columns: 1fr;
-  }
-
-  .team {
-    grid-template-columns: 1fr;
-    max-width: 420px;
-    margin-inline: auto;
   }
 
   .contact-grid {
