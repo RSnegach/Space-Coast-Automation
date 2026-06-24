@@ -57,7 +57,7 @@ Everything below is intentionally a placeholder. Search and replace before launc
 |------|-------|--------------|
 | **Web3Forms access key** | `contact/index.html`, hidden input `access_key` | Your key from [web3forms.com](https://web3forms.com) (free). Until this is set, the form shows a friendly "not connected yet" message instead of failing silently. |
 | **Phone number** `(321) 555-0100` | footer on every page + `contact/index.html` | Real phone (update both the visible text and the `tel:+1...` link). |
-| **Email** `hello@space-coast-automation.com` | footers, contact page, JSON-LD | Real inbox (this should also be the address that receives Web3Forms submissions). |
+| **Email** `inquiries@space-coast-automation.com` | footers, contact page, JSON-LD | Real inbox (this should also be the address that receives Web3Forms submissions). |
 | **Testimonials** | `index.html` ("What owners say") | Real client quotes with name, role, company. Remove the placeholder badge. |
 | **Team** `[ Add name ]` | `about/index.html` ("The team") | Real names, photos, and bios. Remove the placeholder badge. |
 | **Business address** | JSON-LD in `index.html` | Add street address and ZIP if you want a full local listing. Currently city/region only. |
