@@ -4,7 +4,7 @@ Marketing website for **Space Coast Automation**, a team of current and former a
 
 Live domain: **[space-coast-automation.com](https://space-coast-automation.com)**
 
-> Built by rocket scientists. Working for Main Street.
+> It's not rocket science.
 
 ---
 
